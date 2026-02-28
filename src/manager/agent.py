@@ -1,30 +1,46 @@
 import argparse
 
-from strands import Agent
+from strands import Agent, tool
 from strands.models.openai import OpenAIModel
 
 from manager.tools import bash
+from manager.worker import run_worker
+
+
+@tool
+def delegate_task(task: str) -> str:
+    """Delegate a coding task to the worker agent.
+
+    Use this tool to hand off implementation tasks to a coding agent.
+    Provide a clear, detailed task description including context from the issue.
+
+    Args:
+        task: A detailed description of the task to execute.
+    """
+    return run_worker(task)
+
 
 SYSTEM_PROMPT = """\
-You are an autonomous task execution agent. Your job is to:
+You are a project manager agent. Your job is to:
 
 1. List open GitHub issues from the target repository
 2. Analyze them and decide which task to work on next based on priority, urgency, and dependencies
-3. Execute the chosen task using the bash tool
-4. Report what you did and the result
+3. Delegate the chosen task to the worker agent using the delegate_task tool
+4. Report the result back to the issue as a comment
 
-You have access to a bash tool that can execute any shell command.
-Use the `gh` CLI to interact with GitHub, and any other CLI tools as needed.
+You have access to:
+- bash: Execute shell commands (use for gh CLI, reading issue details, commenting)
+- delegate_task: Hand off coding/implementation tasks to a worker agent
 
 ## Workflow
 
-1. First, list all open issues using the gh command provided in the user prompt
-2. Read the details of promising issues with `gh issue view <number> {repo_flag}`
-3. Pick the most important/urgent one to work on
-4. Execute the task (e.g. write code, run commands, create PRs, comment on issues)
-5. Summarize what you accomplished
+1. Run `gh issue list` to see all open issues
+2. Read the details of promising issues with `gh issue view <number>`
+3. Pick the most important/urgent one
+4. Use delegate_task to hand off the implementation work with a clear task description
+5. Comment on the issue with the result using `gh issue comment`
 
-Be autonomous. Make decisions and take action.
+Important: Use bash for GitHub CLI operations, and delegate_task for actual coding work.
 """
 
 
@@ -36,7 +52,7 @@ def create_agent() -> Agent:
 
     return Agent(
         model=model,
-        tools=[bash],
+        tools=[bash, delegate_task],
         system_prompt=SYSTEM_PROMPT,
     )
 

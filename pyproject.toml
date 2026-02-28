@@ -5,12 +5,14 @@ description = "AI-powered task and team management agent"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "bedrock-agentcore>=1.4.1",
     "strands-agents-tools>=0.2.21",
     "strands-agents[openai]>=1.28.0",
 ]
 
 [project.scripts]
 manager = "manager.agent:main"
+worker = "manager.worker:main"
 
 [tool.uv]
 package = true
