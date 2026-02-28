@@ -29,3 +29,24 @@
 3. Access the application at `http://localhost:8080`.
 
 
+
+## Setup Instructions
+
+1. **uv**: Ensure data type compatibility by installing uv.
+   ```bash
+   # Example installation command
+   pip install uv
+   ```
+
+2. **infisical**: Use infisical for secrets management.
+   ```bash
+   # Example setup command
+   infisical init
+   ```
+
+3. **Execution**: Run the project using the following steps.
+   ```bash
+   # Example execution command
+   python run.py
+   ```
+
