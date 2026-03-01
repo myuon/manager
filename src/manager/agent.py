@@ -43,6 +43,22 @@ You have access to:
 Important: Use bash for GitHub CLI operations, and delegate_task for actual coding work.
 """
 
+ANALYZE_PROMPT = """\
+You are a project manager agent in analysis mode. Your job is to:
+
+1. For each target repository, list open GitHub issues
+2. Read the details of each issue
+3. Analyze priority, urgency, and dependencies
+4. Report a summary of what should be done next for each repository
+
+Do NOT execute any tasks or delegate to workers. Only analyze and report.
+Output a clear summary for each repository with:
+- Repository name
+- Number of open issues
+- The most important/urgent issue and why
+- Recommended next action
+"""
+
 
 def create_agent() -> Agent:
     model = OpenAIModel(
@@ -59,22 +75,56 @@ def create_agent() -> Agent:
 
 def main():
     parser = argparse.ArgumentParser(description="AI task management agent")
-    parser.add_argument("--repo", "-r", default=None, help="Target GitHub repository (e.g. myuon/some-repo)")
+    parser.add_argument("--repo", "-r", action="append", default=None, help="Target GitHub repository (e.g. myuon/some-repo). Can be specified multiple times.")
+    parser.add_argument("--analyze", action="store_true", help="Analysis-only mode: report what to do without executing")
     args = parser.parse_args()
 
-    agent = create_agent()
-
-    if args.repo:
-        repo_flag = f"-R {args.repo}"
+    if args.analyze:
+        # Analysis mode: no worker delegation needed
+        model = OpenAIModel(
+            model_id="gpt-4o",
+            params={"max_tokens": 4096},
+        )
+        agent = Agent(
+            model=model,
+            tools=[bash],
+            system_prompt=ANALYZE_PROMPT,
+        )
     else:
-        repo_flag = ""
+        agent = create_agent()
 
-    prompt = f"""\
+    repos = args.repo or [None]
+
+    if args.analyze:
+        repo_parts = []
+        for repo in repos:
+            if repo:
+                repo_parts.append(f"- `gh issue list -R {repo}` (repo: {repo})")
+            else:
+                repo_parts.append("- `gh issue list` (current repo)")
+        repo_list = "\n".join(repo_parts)
+
+        prompt = f"""\
+Analyze the following repositories and report what should be done next for each:
+
+{repo_list}
+
+For each repo, run `gh issue list` with the appropriate `-R` flag, then `gh issue view` for important issues.
+Provide a comprehensive analysis summary.
+"""
+        agent(prompt)
+    else:
+        for repo in repos:
+            if repo:
+                repo_flag = f"-R {repo}"
+            else:
+                repo_flag = ""
+
+            prompt = f"""\
 Run `gh issue list {repo_flag}` to see all open issues, then pick the most important one and execute it.
 Use `{repo_flag}` flag for all gh commands if specified.
 """
-
-    agent(prompt)
+            agent(prompt)
 
 
 if __name__ == "__main__":
