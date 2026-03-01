@@ -1,4 +1,4 @@
-# Manager - AI-powered Task Management Agent
+# Manager - PDM Assistant
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@
 
 ## Architecture
 
-- **Controller** (`agent.py`): GitHub Issuesを監視し、優先度を判断してワーカーにタスクを委譲
+- **PDM Agent** (`agent.py`): 対話型のPDMアシスタント。リポジトリの分析、タスク発見・精査、実装指示、PR管理を行う
 - **Worker** (`worker.py`): コーディングタスクを受け取り自律的に実行するエージェント
 - **Runtime** (`runtime.py`): AgentCore Runtime用のラッパー（ワーカーをHTTPエンドポイントとして公開）
 
@@ -18,12 +18,13 @@
 - **Infisical** を使用してシークレットを管理する
 - `.env` ファイルは使わない
 - アプリケーション実行時は `infisical run -- <command>` でシークレットを注入する
-- 例: `infisical run -- uv run manager`
 
 ## Commands
 
-- Run controller: `infisical run -- uv run manager`
-- Run controller (specific repo): `infisical run -- uv run manager --repo owner/repo`
+- Interactive mode: `infisical run -- uv run manager -r owner/repo`
+- Multiple repos: `infisical run -- uv run manager -r owner/repo1 -r owner/repo2`
+- Auto analyze: `infisical run -- uv run manager --analyze -r owner/repo`
+- Auto execute: `infisical run -- uv run manager --auto -r owner/repo`
 - Run worker standalone: `infisical run -- uv run worker "<task>"`
 - Run runtime locally: `infisical run -- uv run python -m manager.runtime`
 - Install deps: `uv sync`
@@ -33,7 +34,7 @@
 ```
 src/manager/
   __init__.py
-  agent.py    # Controller agent (issue triage + delegation)
+  agent.py    # PDM assistant (interactive REPL + auto modes)
   worker.py   # Worker agent (coding task execution)
   runtime.py  # AgentCore Runtime wrapper
   tools.py    # Shared tools (bash)

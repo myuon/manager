@@ -15,7 +15,7 @@ def bash(command: str) -> str:
         shell=True,
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=120,
     )
 
     output = ""
